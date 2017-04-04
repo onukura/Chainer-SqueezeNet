@@ -1,4 +1,4 @@
-# SqueezeNet
+# SqueezeNet chainer version
 
 1.Download SqueezeNet ver1.1 caffemodel from https://github.com/DeepScale/SqueezeNet/tree/master/SqueezeNet_v1.1    
 2.model = SqueezeNet(output)    
