@@ -24,9 +24,9 @@ class SqueezeNet_v11(chainer.Chain):
             fire3_bn=L.BatchNormalization(128),
             			
             #fire4=Fire(128, 16, 128, 128),
-            fire4_squeeze_11=L.Convolution2D(128, 16, 1),
-            fire4_expand_11=L.Convolution2D(16, 128, 1),
-            fire4_expand_33=L.Convolution2D(16, 128, 3, pad=1),
+            fire4_squeeze_11=L.Convolution2D(128, 32, 1),
+            fire4_expand_11=L.Convolution2D(32, 128, 1),
+            fire4_expand_33=L.Convolution2D(32, 128, 3, pad=1),
             fire4_bn=L.BatchNormalization(256),		
             			
             #fire5=Fire(256, 32, 128, 128),
