@@ -48,12 +48,14 @@ class SqueezeNet(chainer.Chain):
         if pretrained_model == 'v10':
             _retrieve(
                 'squeezenet_v10.npz',
-                'https://github.com/DeepScale/SqueezeNet/SqueezeNet_v1.0/squeezenet_v1.0.caffemodel',
+                'https://github.com/DeepScale/SqueezeNet/'
+				'SqueezeNet_v1.0/squeezenet_v1.0.caffemodel',
                 self)
         if pretrained_model == 'v11':
             _retrieve(
                 'squeezenet_v11.npz',
-                'https://github.com/DeepScale/SqueezeNet/SqueezeNet_v1.1/squeezenet_v1.1.caffemodel',
+                'https://github.com/DeepScale/SqueezeNet/'
+				'SqueezeNet_v1.1/squeezenet_v1.1.caffemodel',
                 self)
         elif pretrained_model:
             npz.load_npz(pretrained_model, self)
