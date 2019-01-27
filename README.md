@@ -1,4 +1,4 @@
-# SqueezeNet 
+# Chainer-SqueezeNet 
 [Chainer](https://github.com/pfnet/chainer) implimentation of  [SqueezeNet](http://arxiv.org/abs/1602.07360).  
 This repository contains v1.0 and v1.1.  
 Official trained caffemodel will be downloaded from [DeepScale/SqueezeNet](https://github.com/DeepScale/SqueezeNet).  
