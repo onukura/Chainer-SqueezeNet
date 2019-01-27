@@ -5,36 +5,44 @@ import os
 import sys
 
 import chainer
-import chainer.functions as F
-import chainer.links as L
 from chainer.dataset import download
+from chainer.functions.pooling.average_pooling_2d import average_pooling_2d
+from chainer.functions.pooling.max_pooling_2d import max_pooling_2d
+from chainer.functions.activation.relu import relu
+from chainer.functions.array.reshape import reshape
+from chainer.functions.noise.dropout import dropout
+from chainer.functions.array.concat import concat
+from chainer import link
+from chainer.links.connection.convolution_2d import Convolution2D
+from chainer.links.normalization.batch_normalization import BatchNormalization
 from chainer.serializers import npz
+
 
 class FireBlock(chainer.Chain):
 
     def __init__(self, in_ch, mid_ch, out_ch):
         super(FireBlock, self).__init__()
         with self.init_scope():
-            self.squeeze_11 = L.Convolution2D(in_ch,  mid_ch, 1)
-            self.expand_11  = L.Convolution2D(mid_ch, out_ch, 1)
-            self.expand_33  = L.Convolution2D(mid_ch, out_ch, 3, pad=1)
-            self.bn         = L.BatchNormalization(out_ch * 2)
+            self.squeeze_11 = Convolution2D(in_ch,  mid_ch, 1)
+            self.expand_11  = Convolution2D(mid_ch, out_ch, 1)
+            self.expand_33  = Convolution2D(mid_ch, out_ch, 3, pad=1)
+            self.bn         = BatchNormalization(out_ch * 2)
 
     def __call__(self, x):
-        h = F.relu(self.squeeze_11(x))
-        h = F.concat((self.expand_11(h),
-                      self.expand_33(h)), axis=1)
-        return F.relu(self.bn(h))
+        h = relu(self.squeeze_11(x))
+        h = concat((self.expand_11(h),
+                    self.expand_33(h)), axis=1)
+        return relu(self.bn(h))
 
 
-class SqueezeNet(chainer.Chain):
+class SqueezeNet(link.Chain):
 
     insize = 227
 
     def __init__(self, c1_ch, c1_k, pretrained_model=None):
         super(SqueezeNet, self).__init__()
         with self.init_scope():
-            self.conv1 = L.Convolution2D(3, c1_ch, ksize=c1_k, stride=2)
+            self.conv1 = Convolution2D(3, c1_ch, ksize=c1_k, stride=2)
             self.fire2 = FireBlock(c1_ch,  16,  64)
             self.fire3 = FireBlock(128, 16,  64)
             self.fire4 = FireBlock(128, 32, 128)
@@ -43,7 +51,7 @@ class SqueezeNet(chainer.Chain):
             self.fire7 = FireBlock(384, 48, 192)
             self.fire8 = FireBlock(384, 64, 256)
             self.fire9 = FireBlock(512, 64, 256)
-            self.conv10 = L.Convolution2D(512, 1000, 1)
+            self.conv10 = Convolution2D(512, 1000, 1)
 
         if pretrained_model == 'v10':
             _retrieve(
@@ -63,7 +71,7 @@ class SqueezeNet(chainer.Chain):
     @property
     def available_layers(self):
         return list(self.functions.keys())
-    
+
     @classmethod
     def convert_caffemodel_to_npz(cls, path_caffemodel, path_npz):
         """Converts a pre-trained caffemodel to a chainer model.
@@ -116,28 +124,28 @@ class SqueezeNet(chainer.Chain):
 class SqueezeNet_V10(SqueezeNet):
 
     def __init__(self, pretrained_model='auto'):
-        if pretrained_model == 'auto': 
+        if pretrained_model == 'auto':
             pretrained_model = 'v10'
         super(SqueezeNet_V10, self).__init__(96, 7, pretrained_model)
 
     @property
     def functions(self):
         return collections.OrderedDict([
-            ('conv1', [self.conv1, F.relu]),
-            ('pool1', [lambda x: F.max_pooling_2d(x, 3, stride=2)]),
+            ('conv1', [self.conv1, relu]),
+            ('pool1', [lambda x: max_pooling_2d(x, 3, stride=2)]),
             ('fire2', [self.fire2]),
             ('fire3', [self.fire3]),
             ('fire4', [self.fire4]),
-            ('pool2', [lambda x: F.max_pooling_2d(x, 3, stride=2)]),
+            ('pool2', [lambda x: max_pooling_2d(x, 3, stride=2)]),
             ('fire5', [self.fire5]),
             ('fire6', [self.fire6]),
             ('fire7', [self.fire7]),
             ('fire8', [self.fire8]),
-            ('pool3', [lambda x: F.max_pooling_2d(x, 3, stride=2)]),
-            ('fire9', [self.fire9, F.dropout]),
-            ('conv10', [self.conv10, F.relu]),
-            ('pool4', [lambda x: F.average_pooling_2d(x, 13)]),
-            ('prob',  [lambda x: F.reshape(x, (-1, 1000))]),
+            ('pool3', [lambda x: max_pooling_2d(x, 3, stride=2)]),
+            ('fire9', [self.fire9, dropout]),
+            ('conv10', [self.conv10, relu]),
+            ('pool4', [lambda x: average_pooling_2d(x, 13)]),
+            ('prob',  [lambda x: reshape(x, (-1, 1000))]),
         ])
 
 
@@ -151,21 +159,21 @@ class SqueezeNet_V11(SqueezeNet):
     @property
     def functions(self):
         return collections.OrderedDict([
-            ('conv1', [self.conv1, F.relu]),
-            ('pool1', [lambda x: F.max_pooling_2d(x, 3, stride=2)]),
+            ('conv1', [self.conv1, relu]),
+            ('pool1', [lambda x: max_pooling_2d(x, 3, stride=2)]),
             ('fire2', [self.fire2]),
             ('fire3', [self.fire3]),
-            ('pool2', [lambda x: F.max_pooling_2d(x, 3, stride=2)]),
+            ('pool2', [lambda x: max_pooling_2d(x, 3, stride=2)]),
             ('fire4', [self.fire4]),
             ('fire5', [self.fire5]),
-            ('pool3', [lambda x: F.max_pooling_2d(x, 3, stride=2)]),
+            ('pool3', [lambda x: max_pooling_2d(x, 3, stride=2)]),
             ('fire6', [self.fire6]),
             ('fire7', [self.fire7]),
             ('fire8', [self.fire8]),
-            ('fire9', [self.fire9, F.dropout]),
-            ('conv10', [self.conv10, F.relu]),
-            ('pool4', [lambda x: F.average_pooling_2d(x, 13)]),
-            ('prob',  [lambda x: F.reshape(x, (-1, 1000))]),
+            ('fire9', [self.fire9, dropout]),
+            ('conv10', [self.conv10, relu]),
+            ('pool4', [lambda x: average_pooling_2d(x, 13)]),
+            ('prob',  [lambda x: reshape(x, (-1, 1000))]),
         ])
 
 
